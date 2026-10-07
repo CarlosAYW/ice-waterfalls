@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Icefall Model Review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f8;
+      --panel: #ffffff;
+      --line: #d9dee5;
+      --ink: #20252c;
+      --muted: #65707d;
+      --blue: #2457a6;
+      --green: #20834a;
+      --red: #b53a32;
+      --amber: #a66a12;
+      --cyan: #23768a;
+      --purple: #6d4aa5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 14px;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(8px);
+    }
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 14px;
+    }
+    h1 { margin: 0; font-size: 18px; letter-spacing: 0; }
+    .muted { color: var(--muted); }
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    button, select, input, textarea {
+      font: inherit;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 6px;
+    }
+    button {
+      min-height: 34px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+    button.good { border-color: #a7d4b9; }
+    button.bad { border-color: #e5b1ad; }
+    button.low { border-color: #9ccfda; }
+    button.high { border-color: #c7b0e3; }
+    button.unclear { border-color: #e0c18a; }
+    button.active.good { background: var(--green); color: #fff; border-color: var(--green); }
+    button.active.bad { background: var(--red); color: #fff; border-color: var(--red); }
+    button.active.low { background: var(--cyan); color: #fff; border-color: var(--cyan); }
+    button.active.high { background: var(--purple); color: #fff; border-color: var(--purple); }
+    button.active.unclear { background: var(--amber); color: #fff; border-color: var(--amber); }
+    select, input { min-height: 34px; padding: 5px 8px; }
+    main {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      min-height: calc(100vh - 56px);
+    }
+    aside {
+      border-right: 1px solid var(--line);
+      background: #fff;
+      overflow: auto;
+      max-height: calc(100vh - 56px);
+    }
+    .filterbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    #search { width: 100%; }
+    .caseList { display: grid; }
+    .caseItem {
+      border-bottom: 1px solid #eef1f4;
+      padding: 9px 10px;
+      cursor: pointer;
+      display: grid;
+      gap: 4px;
+    }
+    .caseItem:hover { background: #f4f7fb; }
+    .caseItem.active { background: #eaf1fc; border-left: 4px solid var(--blue); padding-left: 6px; }
+    .caseMeta { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #edf0f3;
+      color: #3a4350;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .badge.ok { background: #dff2e7; color: #175f34; }
+    .badge.no { background: #f8dfdc; color: #8a251e; }
+    .badge.low { background: #dbf0f4; color: #165b6a; }
+    .badge.high { background: #ede4f6; color: #52367c; }
+    .badge.maybe { background: #f7ecd6; color: #7a4b08; }
+    .workspace {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+    .summaryBand {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .metric, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .metric { padding: 10px; }
+    .metric strong { display: block; font-size: 18px; }
+    .panel { padding: 12px; }
+    .caseHeader {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: start;
+    }
+    .caseTitle { display: grid; gap: 3px; }
+    .caseTitle h2 { margin: 0; font-size: 22px; letter-spacing: 0; }
+    .mediaGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .mediaTile {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f9fafb;
+    }
+    .mediaTile img, .mediaTile video {
+      display: block;
+      width: 100%;
+      max-height: 68vh;
+      object-fit: contain;
+      background: #111820;
+    }
+    .caption {
+      padding: 7px 8px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .chartBox {
+      display: grid;
+      gap: 8px;
+    }
+    canvas {
+      width: 100%;
+      height: 300px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    .valueGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    .valueCell {
+      border: 1px solid #eef1f4;
+      border-radius: 6px;
+      padding: 8px;
+      background: #fbfcfd;
+    }
+    .valueCell .label { color: var(--muted); font-size: 12px; }
+    .valueCell .value { font-size: 18px; margin-top: 2px; }
+    textarea {
+      width: 100%;
+      min-height: 86px;
+      padding: 8px;
+      resize: vertical;
+    }
+    .reviewActions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .decisionButtons { display: flex; gap: 8px; flex-wrap: wrap; }
+    .hidden { display: none !important; }
+    @media (max-width: 920px) {
+      main { grid-template-columns: 1fr; }
+      aside { max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+      .summaryBand { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .topbar { grid-template-columns: 1fr; }
+      .controls { justify-content: start; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div>
+        <h1>Icefall Model Review</h1>
+        <div id="saveStatus" class="muted">Loading data...</div>
+      </div>
+      <div class="controls">
+        <button id="prevBtn" type="button">Previous</button>
+        <button id="nextBtn" type="button" class="primary">Next</button>
+        <button id="exportBtn" type="button">Export CSV</button>
+        <button id="saveBtn" type="button">Save</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <aside>
+      <div class="filterbar">
+        <input id="search" type="search" placeholder="UID, name, date">
+        <select id="statusFilter">
+          <option value="all">All cases</option>
+          <option value="open">Open</option>
+          <option value="matches">Matches</option>
+          <option value="does_not_fit">Does not fit</option>
+          <option value="model_too_little_ice">Model too little ice</option>
+          <option value="model_too_much_ice">Model too much ice</option>
+          <option value="unclear">Unclear</option>
+          <option value="no_model">Missing model value</option>
+        </select>
+        <div id="listStats" class="muted"></div>
+      </div>
+      <div id="caseList" class="caseList"></div>
+    </aside>
+
+    <section class="workspace">
+      <div class="summaryBand">
+        <div class="metric"><span class="muted">Cases</span><strong id="mCases">0</strong></div>
+        <div class="metric"><span class="muted">Open</span><strong id="mOpen">0</strong></div>
+        <div class="metric"><span class="muted">Matches</span><strong id="mOk">0</strong></div>
+        <div class="metric"><span class="muted">Does not fit</span><strong id="mNo">0</strong></div>
+        <div class="metric"><span class="muted">Too little ice</span><strong id="mTooLow">0</strong></div>
+        <div class="metric"><span class="muted">Too much ice</span><strong id="mTooHigh">0</strong></div>
+        <div class="metric"><span class="muted">Unclear</span><strong id="mMaybe">0</strong></div>
+      </div>
+
+      <div class="panel">
+        <div class="caseHeader">
+          <div class="caseTitle">
+            <h2 id="caseTitle">-</h2>
+            <div id="caseSub" class="muted"></div>
+          </div>
+          <span id="modelBadge" class="badge"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 style="margin-top:0;">Images</h3>
+        <div id="mediaGrid" class="mediaGrid"></div>
+      </div>
+
+      <div class="panel chartBox">
+        <h3 style="margin:0;">Model season curve</h3>
+        <canvas id="chart"></canvas>
+        <div id="hoverInfo" class="muted"></div>
+        <div id="valueGrid" class="valueGrid"></div>
+      </div>
+
+      <div class="panel">
+        <h3 style="margin-top:0;">Local condition note</h3>
+        <div id="conditionText"></div>
+      </div>
+
+      <div class="panel">
+        <div class="reviewActions">
+          <div class="decisionButtons">
+            <button id="btnOk" class="good" type="button">Matches</button>
+            <button id="btnNo" class="bad" type="button">Does not fit</button>
+            <button id="btnTooLow" class="low" type="button">Model too little ice</button>
+            <button id="btnTooHigh" class="high" type="button">Model too much ice</button>
+            <button id="btnMaybe" class="unclear" type="button">Unclear</button>
+            <button id="btnClear" type="button">Clear</button>
+          </div>
+          <div class="muted" id="caseProgress"></div>
+        </div>
+        <div style="margin-top:10px;">
+          <textarea id="comment" placeholder="Comment"></textarea>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      data: null,
+      results: {},
+      filtered: [],
+      index: 0,
+      chartHoverIndex: -1,
+    };
+
+    const els = {
+      saveStatus: document.getElementById('saveStatus'),
+      caseList: document.getElementById('caseList'),
+      search: document.getElementById('search'),
+      statusFilter: document.getElementById('statusFilter'),
+      listStats: document.getElementById('listStats'),
+      title: document.getElementById('caseTitle'),
+      sub: document.getElementById('caseSub'),
+      modelBadge: document.getElementById('modelBadge'),
+      mediaGrid: document.getElementById('mediaGrid'),
+      chart: document.getElementById('chart'),
+      hoverInfo: document.getElementById('hoverInfo'),
+      valueGrid: document.getElementById('valueGrid'),
+      conditionText: document.getElementById('conditionText'),
+      comment: document.getElementById('comment'),
+      progress: document.getElementById('caseProgress'),
+      mCases: document.getElementById('mCases'),
+      mOpen: document.getElementById('mOpen'),
+      mOk: document.getElementById('mOk'),
+      mNo: document.getElementById('mNo'),
+      mTooLow: document.getElementById('mTooLow'),
+      mTooHigh: document.getElementById('mTooHigh'),
+      mMaybe: document.getElementById('mMaybe'),
+    };
+
+    function esc(s) {
+      return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function currentCase() {
+      return state.filtered[state.index] || null;
+    }
+
+    function resultFor(id) {
+      return state.results[id] || {};
+    }
+
+    function canonicalDecision(decision) {
+      if (decision === 'passt') return 'matches';
+      if (decision === 'passt_nicht') return 'does_not_fit';
+      if (decision === 'unklar') return 'unclear';
+      return decision || '';
+    }
+
+    function normalizeLoadedResults() {
+      Object.values(state.results).forEach(row => {
+        if (row && typeof row === 'object' && row.decision) {
+          row.decision = canonicalDecision(row.decision);
+        }
+      });
+    }
+
+    function keepOnlyLoadedCaseResults() {
+      if (!state.data || !Array.isArray(state.data.cases)) return;
+      const validIds = new Set(state.data.cases.map(c => c.id));
+      state.results = Object.fromEntries(
+        Object.entries(state.results).filter(([caseId]) => validIds.has(caseId))
+      );
+    }
+
+    function decisionLabel(decision) {
+      const d = canonicalDecision(decision);
+      if (d === 'matches') return 'Matches';
+      if (d === 'does_not_fit') return 'Does not fit';
+      if (d === 'model_too_little_ice') return 'Model too little ice';
+      if (d === 'model_too_much_ice') return 'Model too much ice';
+      if (d === 'unclear') return 'Unclear';
+      return 'Open';
+    }
+
+    function decisionClass(decision) {
+      const d = canonicalDecision(decision);
+      if (d === 'matches') return 'ok';
+      if (d === 'does_not_fit') return 'no';
+      if (d === 'model_too_little_ice') return 'low';
+      if (d === 'model_too_much_ice') return 'high';
+      if (d === 'unclear') return 'maybe';
+      return '';
+    }
+
+    function modelStatusLabel(status) {
+      if (status === 'ok') return 'Model value available';
+      if (status === 'kein Modelllauf') return 'No model run';
+      if (status === 'kein Modellwert am Tag') return 'No model value for this day';
+      return status || '';
+    }
+
+    function modelClass(day) {
+      if (!day || day.thickness_m_median === null || day.thickness_m_median === undefined) return '';
+      const v = Number(day.thickness_m_median);
+      if (v >= 0.15) return 'good';
+      if (v >= 0.05) return 'medium';
+      return 'poor';
+    }
+
+    function buildResult(caseItem, decision, comment) {
+      const day = caseItem.model_day || {};
+      return {
+        case_id: caseItem.id,
+        uid: caseItem.uid,
+        name: caseItem.name,
+        date: caseItem.date,
+        date_iso: caseItem.date_iso,
+        decision,
+        comment: comment || '',
+        model_status: caseItem.model_status || '',
+        model_thickness_m_median: day.thickness_m_median ?? '',
+        model_thickness_m_max: day.thickness_m_max ?? '',
+        model_climbability_median: day.climbability_median ?? '',
+        condition: caseItem.condition || '',
+        image_files: (caseItem.images || []).map(x => x.file).join(', '),
+        video_files: (caseItem.videos || []).map(x => x.file).join(', '),
+        updated_at: new Date().toISOString(),
+      };
+    }
+
+    function updateMetrics() {
+      const cases = state.data ? state.data.cases : [];
+      let ok = 0, no = 0, tooLow = 0, tooHigh = 0, maybe = 0;
+      cases.forEach(c => {
+        const d = canonicalDecision(resultFor(c.id).decision);
+        if (d === 'matches') ok++;
+        else if (d === 'does_not_fit') no++;
+        else if (d === 'model_too_little_ice') tooLow++;
+        else if (d === 'model_too_much_ice') tooHigh++;
+        else if (d === 'unclear') maybe++;
+      });
+      els.mCases.textContent = String(cases.length);
+      els.mOk.textContent = String(ok);
+      els.mNo.textContent = String(no);
+      els.mTooLow.textContent = String(tooLow);
+      els.mTooHigh.textContent = String(tooHigh);
+      els.mMaybe.textContent = String(maybe);
+      els.mOpen.textContent = String(Math.max(0, cases.length - ok - no - tooLow - tooHigh - maybe));
+    }
+
+    function applyFilters() {
+      const q = els.search.value.trim().toLowerCase();
+      const f = els.statusFilter.value;
+      const all = state.data ? state.data.cases : [];
+      state.filtered = all.filter(c => {
+        const res = resultFor(c.id);
+        const decision = canonicalDecision(res.decision);
+        const hay = `${c.uid} ${c.name} ${c.date} ${c.condition || ''}`.toLowerCase();
+        if (q && !hay.includes(q)) return false;
+        if (f === 'open' && decision) return false;
+        if (f === 'matches' && decision !== 'matches') return false;
+        if (f === 'does_not_fit' && decision !== 'does_not_fit') return false;
+        if (f === 'model_too_little_ice' && decision !== 'model_too_little_ice') return false;
+        if (f === 'model_too_much_ice' && decision !== 'model_too_much_ice') return false;
+        if (f === 'unclear' && decision !== 'unclear') return false;
+        if (f === 'no_model' && c.model_status === 'ok') return false;
+        return true;
+      });
+      if (state.index >= state.filtered.length) state.index = Math.max(0, state.filtered.length - 1);
+      els.listStats.textContent = `${state.filtered.length} visible`;
+      renderList();
+      renderCase();
+    }
+
+    function renderList() {
+      els.caseList.innerHTML = state.filtered.map((c, i) => {
+        const res = resultFor(c.id);
+        const dec = res.decision || '';
+        const active = i === state.index ? ' active' : '';
+        const badgeClass = decisionClass(dec);
+        const modelInfo = c.model_status === 'ok' ? 'Model' : modelStatusLabel(c.model_status);
+        return `
+          <div class="caseItem${active}" data-index="${i}">
+            <div class="caseMeta">
+              <strong>${esc(c.uid)} - ${esc(c.date)}</strong>
+              <span class="badge ${badgeClass}">${esc(decisionLabel(dec))}</span>
+            </div>
+            <div>${esc(c.name)}</div>
+            <div class="muted">${esc((c.images || []).length)} image(s) - ${esc(modelInfo || '')}</div>
+          </div>
+        `;
+      }).join('');
+      els.caseList.querySelectorAll('.caseItem').forEach(node => {
+        node.addEventListener('click', () => {
+          state.index = Number(node.getAttribute('data-index') || 0);
+          renderList();
+          renderCase();
+        });
+      });
+    }
+
+    function renderMedia(c) {
+      const images = (c.images || []).map(img => `
+        <div class="mediaTile">
+          <a href="${img.path}" target="_blank" rel="noopener"><img src="${img.path}" alt="${esc(img.file)}" loading="lazy"></a>
+          <div class="caption"><span>${esc(img.file)}</span><span>${esc(img.source || '')}</span></div>
+        </div>
+      `);
+      const videos = (c.videos || []).map(v => `
+        <div class="mediaTile">
+          <video src="${v.path}" controls preload="metadata"></video>
+          <div class="caption"><span>${esc(v.file)}</span><span>${esc(v.source || '')}</span></div>
+        </div>
+      `);
+      els.mediaGrid.innerHTML = images.concat(videos).join('') || '<div class="muted">No media found.</div>';
+    }
+
+    function renderValues(c) {
+      const model = state.data.models[c.uid];
+      const day = c.model_day;
+      const period = model ? `${model.first_date} to ${model.last_date}` : '-';
+      const cells = [
+        ['Model status', modelStatusLabel(c.model_status) || '-'],
+        ['Model period', period],
+        ['Day class', day ? modelClass(day) : '-'],
+        ['Median thickness', day ? `${Number(day.thickness_m_median).toFixed(3)} m` : '-'],
+        ['Max thickness', day ? `${Number(day.thickness_m_max).toFixed(3)} m` : '-'],
+        ['Climbability', day && day.climbability_median !== null ? Number(day.climbability_median).toFixed(3) : '-'],
+        ['TLz median', day && day.TLz_median_C !== null ? `${Number(day.TLz_median_C).toFixed(1)} deg C` : '-'],
+        ['score_h', day && day.score_h_median !== null ? Number(day.score_h_median).toFixed(3) : '-'],
+      ];
+      els.valueGrid.innerHTML = cells.map(([label, value]) => `
+        <div class="valueCell">
+          <div class="label">${esc(label)}</div>
+          <div class="value">${esc(value)}</div>
+        </div>
+      `).join('');
+    }
+
+    function setupCanvas(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.max(600, Math.round(rect.width * ratio));
+      canvas.height = Math.max(260, Math.round(rect.height * ratio));
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      return { ctx, w: canvas.width / ratio, h: canvas.height / ratio };
+    }
+
+    function drawChart(c, hoverIndex = -1) {
+      const { ctx, w, h } = setupCanvas(els.chart);
+      ctx.clearRect(0, 0, w, h);
+      if (!c || !state.data) {
+        els.hoverInfo.textContent = '';
+        return;
+      }
+      const model = state.data.models[c.uid];
+      if (!model || !model.series || !model.series.length) {
+        ctx.fillStyle = '#65707d';
+        ctx.font = '14px system-ui';
+        ctx.fillText(modelStatusLabel(c.model_status) || 'No model run available.', 18, 30);
+        els.hoverInfo.textContent = modelStatusLabel(c.model_status) || '';
+        return;
+      }
+
+      const series = model.series;
+      const maxY = Math.max(0.2, ...series.map(d => Number(d.thickness_m_max || d.thickness_m_median || 0)));
+      const pad = { l: 48, r: 18, t: 18, b: 34 };
+      const x = i => pad.l + (i / Math.max(1, series.length - 1)) * (w - pad.l - pad.r);
+      const y = v => pad.t + (1 - (v / maxY)) * (h - pad.t - pad.b);
+
+      ctx.strokeStyle = '#e4e8ee';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const yy = pad.t + (i / 4) * (h - pad.t - pad.b);
+        ctx.beginPath();
+        ctx.moveTo(pad.l, yy);
+        ctx.lineTo(w - pad.r, yy);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#65707d';
+      ctx.font = '11px system-ui';
+      ctx.fillText(`${maxY.toFixed(2)} m`, 6, pad.t + 4);
+      ctx.fillText('0 m', 20, h - pad.b + 4);
+
+      ctx.strokeStyle = '#2457a6';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      series.forEach((d, i) => {
+        const xx = x(i);
+        const yy = y(Number(d.thickness_m_median || 0));
+        if (i === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+      });
+      ctx.stroke();
+
+      ctx.strokeStyle = '#9fb8dc';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      series.forEach((d, i) => {
+        const xx = x(i);
+        const yy = y(Number(d.thickness_m_max || 0));
+        if (i === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+      });
+      ctx.stroke();
+
+      const dayIndex = series.findIndex(d => d.date === c.date_iso);
+      if (dayIndex >= 0) {
+        const xx = x(dayIndex);
+        ctx.strokeStyle = '#b53a32';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(xx, pad.t);
+        ctx.lineTo(xx, h - pad.b);
+        ctx.stroke();
+        const day = series[dayIndex];
+        ctx.fillStyle = '#b53a32';
+        ctx.beginPath();
+        ctx.arc(xx, y(Number(day.thickness_m_median || 0)), 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (hoverIndex >= 0 && hoverIndex < series.length) {
+        const d = series[hoverIndex];
+        const xx = x(hoverIndex);
+        ctx.strokeStyle = '#20252c';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(xx, pad.t);
+        ctx.lineTo(xx, h - pad.b);
+        ctx.stroke();
+        els.hoverInfo.textContent = `${d.date_display}: median ${Number(d.thickness_m_median).toFixed(3)} m, max ${Number(d.thickness_m_max).toFixed(3)} m`;
+      } else if (dayIndex >= 0) {
+        const d = series[dayIndex];
+        els.hoverInfo.textContent = `${c.date}: median ${Number(d.thickness_m_median).toFixed(3)} m, max ${Number(d.thickness_m_max).toFixed(3)} m`;
+      } else {
+        els.hoverInfo.textContent = modelStatusLabel(c.model_status) || '';
+      }
+    }
+
+    function renderCase() {
+      const c = currentCase();
+      if (!c) {
+        els.title.textContent = 'No cases';
+        els.sub.textContent = '';
+        els.mediaGrid.innerHTML = '';
+        els.valueGrid.innerHTML = '';
+        els.conditionText.textContent = '';
+        return;
+      }
+      const res = resultFor(c.id);
+      const decision = canonicalDecision(res.decision);
+      els.title.textContent = `${c.uid} - ${c.name}`;
+      els.sub.textContent = `${c.date} - ${c.images.length} image(s)${c.videos.length ? ` - ${c.videos.length} video(s)` : ''}`;
+      els.modelBadge.textContent = modelStatusLabel(c.model_status);
+      els.modelBadge.className = `badge ${c.model_status === 'ok' ? 'ok' : 'maybe'}`;
+      els.conditionText.textContent = c.condition || 'No condition note in the TXT for this day.';
+      els.comment.value = res.comment || '';
+      document.getElementById('btnOk').classList.toggle('active', decision === 'matches');
+      document.getElementById('btnNo').classList.toggle('active', decision === 'does_not_fit');
+      document.getElementById('btnTooLow').classList.toggle('active', decision === 'model_too_little_ice');
+      document.getElementById('btnTooHigh').classList.toggle('active', decision === 'model_too_much_ice');
+      document.getElementById('btnMaybe').classList.toggle('active', decision === 'unclear');
+      els.progress.textContent = `${state.index + 1} / ${state.filtered.length}`;
+      renderMedia(c);
+      renderValues(c);
+      drawChart(c);
+      renderList();
+    }
+
+    async function saveResults() {
+      try {
+        const res = await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ results: state.results }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        localStorage.setItem('icefall_review_results', JSON.stringify(state.results));
+        els.saveStatus.textContent = `Saved: ${new Date().toLocaleTimeString('en-GB')}`;
+      } catch (err) {
+        localStorage.setItem('icefall_review_results', JSON.stringify(state.results));
+        els.saveStatus.textContent = `Saved locally only: ${err.message || err}`;
+      }
+      updateMetrics();
+      renderList();
+    }
+
+    function setDecision(decision) {
+      const c = currentCase();
+      if (!c) return;
+      state.results[c.id] = buildResult(c, canonicalDecision(decision), els.comment.value.trim());
+      renderCase();
+      saveResults();
+    }
+
+    function clearDecision() {
+      const c = currentCase();
+      if (!c) return;
+      delete state.results[c.id];
+      renderCase();
+      saveResults();
+    }
+
+    function move(delta) {
+      if (!state.filtered.length) return;
+      state.index = Math.min(state.filtered.length - 1, Math.max(0, state.index + delta));
+      renderCase();
+    }
+
+    function exportCsv() {
+      const fields = [
+        'case_id','uid','name','date','date_iso','decision','comment','model_status',
+        'model_thickness_m_median','model_thickness_m_max','model_climbability_median',
+        'condition','image_files','video_files','updated_at'
+      ];
+      const rows = Object.values(state.results);
+      const csv = [
+        fields.join(';'),
+        ...rows.map(row => fields.map(f => `"${String(row[f] ?? '').replace(/"/g, '""')}"`).join(';'))
+      ].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'validation_results_export.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function load() {
+      const dataRes = await fetch('review_data.json');
+      state.data = await dataRes.json();
+      try {
+        const resultsRes = await fetch('/api/results');
+        if (resultsRes.ok) state.results = await resultsRes.json();
+      } catch (err) {
+        const local = localStorage.getItem('icefall_review_results');
+        state.results = local ? JSON.parse(local) : {};
+      }
+      normalizeLoadedResults();
+      keepOnlyLoadedCaseResults();
+      state.data.cases.sort((a, b) => (a.uid.localeCompare(b.uid) || a.date_iso.localeCompare(b.date_iso)));
+      updateMetrics();
+      applyFilters();
+      els.saveStatus.textContent = `${state.data.summary.cases} cases loaded`;
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => move(-1));
+    document.getElementById('nextBtn').addEventListener('click', () => move(1));
+    document.getElementById('saveBtn').addEventListener('click', saveResults);
+    document.getElementById('exportBtn').addEventListener('click', exportCsv);
+    document.getElementById('btnOk').addEventListener('click', () => setDecision('matches'));
+    document.getElementById('btnNo').addEventListener('click', () => setDecision('does_not_fit'));
+    document.getElementById('btnTooLow').addEventListener('click', () => setDecision('model_too_little_ice'));
+    document.getElementById('btnTooHigh').addEventListener('click', () => setDecision('model_too_much_ice'));
+    document.getElementById('btnMaybe').addEventListener('click', () => setDecision('unclear'));
+    document.getElementById('btnClear').addEventListener('click', clearDecision);
+    els.comment.addEventListener('change', () => {
+      const c = currentCase();
+      const res = resultFor(c && c.id);
+      if (c && res.decision) setDecision(res.decision);
+    });
+    els.search.addEventListener('input', () => { state.index = 0; applyFilters(); });
+    els.statusFilter.addEventListener('change', () => { state.index = 0; applyFilters(); });
+    els.chart.addEventListener('mousemove', evt => {
+      const c = currentCase();
+      const model = c && state.data.models[c.uid];
+      if (!model || !model.series.length) return;
+      const rect = els.chart.getBoundingClientRect();
+      const rel = Math.min(1, Math.max(0, (evt.clientX - rect.left) / rect.width));
+      const idx = Math.round(rel * (model.series.length - 1));
+      drawChart(c, idx);
+    });
+    els.chart.addEventListener('mouseleave', () => drawChart(currentCase()));
+    window.addEventListener('resize', () => drawChart(currentCase()));
+
+    load().catch(err => {
+      els.saveStatus.textContent = `Loading error: ${err.message || err}`;
+    });
+  </script>
+</body>
+</html>

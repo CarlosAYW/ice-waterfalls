@@ -20,6 +20,8 @@ Rplots.pdf
 /data/ModelRuns/
 /data/derived/icefall_structure/cache/
 /data/DEM/_cache_aspect/
+/data/_cache_aws_tl/
+/data/CAP/cap_k_calibration_pairs.csv
 
 # Large DEM/source files that should stay local
 /data/DEM/DGM_AT_5m_epsg31287.tif
@@ -36,8 +38,16 @@ Rplots.pdf
 !/add_new/new_icefalls.csv
 /tmp/
 /scripts/AWS Validation/out/
-# Private validation material (WhatsApp/website photos, videos) - keep local only, never push
-/analysis/Icefall_validation/
+# Private validation material (WhatsApp/website photos, videos) - keep local only, never push.
+# Published: review tool code and the sanitized decision export only (thesis section 2.2.8).
+/analysis/Icefall_validation/*
+!/analysis/Icefall_validation/Review_Tool/
+/analysis/Icefall_validation/Review_Tool/*
+!/analysis/Icefall_validation/Review_Tool/README.md
+!/analysis/Icefall_validation/Review_Tool/build_review_data.py
+!/analysis/Icefall_validation/Review_Tool/review_tool.html
+!/analysis/Icefall_validation/Review_Tool/serve_review_tool.py
+!/analysis/Icefall_validation/Review_Tool/review_decisions_public.csv
 
 # Python and OS noise
 __pycache__/
