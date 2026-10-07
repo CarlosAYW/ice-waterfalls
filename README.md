@@ -1,5 +1,7 @@
 # Ice Waterfalls
 
+> **Reviewing the master's thesis?** Start at **[CarlosAYW/waterfall-ice-thesis](https://github.com/CarlosAYW/waterfall-ice-thesis)**. It maps every thesis figure to its script and data and includes this repository as a submodule pinned to the thesis version (tag `thesis-submission`).
+
 Interactive icefall map and model output for a master thesis project.
 
 ## Repository structure
