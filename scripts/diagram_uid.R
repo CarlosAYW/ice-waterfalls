@@ -1015,18 +1015,43 @@ coef <- list(
   # caps the wind effect to avoid unrealistically large responses
   # at very high wind speeds.
 
-  cap_max_adjust_C   = 3.0,    # Maximum relative CAP temperature correction [K];
+  cap_max_adjust_C   = 6.5,    # Maximum relative CAP temperature correction [K];
   # applied as station-relative cold-air-pooling potential.
+  # Anchored in Rauchoecker et al. (2024, QJRMS 150, 1243-1266), who measured
+  # 5-9 K between valley-floor and slope stations in a 200-300 m deep Alpine
+  # valley (SEECAP, Seefeld/Tyrol); 6.5 K is the midpoint of that range.
+  # Previous value 3.0 K was below the entire measured band.
+  # Upper physical bound for doline-like basins is >25 K
+  # (Pospichal et al. 2003, Gruenloch/Gstettneralm) - not applicable here.
 
-  cap_wind_shutdown_ms = 4.0,  # Wind speed where CAP cooling is mixed out [m s^-1];
-  # calm conditions preserve local cold-air pools.
+  cap_wind_full_ms   = 1.0,    # Wind speed up to which the CAP is undisturbed [m s^-1];
+  # Rauchoecker et al. (2024) observed warming inside the pool already above
+  # ~1 m s^-1.
+
+  cap_wind_shutdown_ms = 2.0,  # Wind speed where CAP cooling is mixed out [m s^-1];
+  # Rauchoecker et al. (2024): the pool was eroded completely above ~2 m s^-1
+  # (foehn breakthrough). Previous value 4.0 m s^-1 kept CAP cooling active
+  # under conditions in which the measurements show no pool at all.
 
   cap_radiation_shutdown_Wm2 = 180, # Direct-radiation threshold reducing CAP [-];
   # direct sun weakens near-surface pooling during the day.
 
+  cap_tau_build_h    = 2.9,    # Cooling time constant of the pool build-up [h];
+  # Rauchoecker et al. (2024) report 2.9 h for Seefeld (Gruenloch 3.2 h,
+  # Peter Sinks 3.1 h) with an initial cooling rate of 3.0 K h^-1. The pool
+  # therefore needs several hours to reach full strength after onset.
+
   cap_no_inversion_factor = 0.35 # Residual CAP strength when no inversion is detected [-].
   # keeps weak nocturnal/local pooling possible even without the global inversion flag.
 )
+
+# Hours since the regional inversion switched on, used for the exponential
+# build-up of the cold-air pool (cap_tau_build_h). Counts consecutive
+# inv_active steps and resets whenever the inversion is off.
+.cap_on <- ifelse(is.na(wx$inv_active), FALSE, as.logical(wx$inv_active))
+wx$cap_since_onset_h <- stats::ave(
+  as.integer(.cap_on), cumsum(!.cap_on), FUN = cumsum
+) * MODEL_STEP_MIN / 60
 
 wx <- wx %>%
   mutate(
@@ -1068,14 +1093,27 @@ wx <- wx %>%
     # Station-relative cold-air pooling correction:
     # positive cap_delta_uid cools the route relative to the station;
     # negative values warm it when the station is the stronger cold-air pool.
-    cap_wind_fac = clamp01(1 - FF_eff / coef$cap_wind_shutdown_ms),
+    # Wind gating: full strength up to cap_wind_full_ms, linearly to zero at
+    # cap_wind_shutdown_ms (Rauchoecker et al. 2024).
+    cap_wind_fac = clamp01(
+      (coef$cap_wind_shutdown_ms - FF_eff) /
+        (coef$cap_wind_shutdown_ms - coef$cap_wind_full_ms)
+    ),
     cap_sun_fac = if_else(
       topo_sun_fac > 0,
       clamp01(1 - GLOW / coef$cap_radiation_shutdown_Wm2),
       1
     ),
     cap_inv_fac = if_else(inv_active, 1, coef$cap_no_inversion_factor),
-    cap_stability_fac = cap_wind_fac * cap_sun_fac * cap_inv_fac,
+    # Exponential build-up after inversion onset (tau = 2.9 h, Seefeld).
+    # Only active while the regional inversion is on; otherwise the residual
+    # cap_no_inversion_factor already represents the weak local pooling.
+    cap_ramp_fac = if_else(
+      inv_active,
+      clamp01(1 - exp(-cap_since_onset_h / coef$cap_tau_build_h)),
+      1
+    ),
+    cap_stability_fac = cap_wind_fac * cap_sun_fac * cap_inv_fac * cap_ramp_fac,
     cap_temp_adjust_C = coef$cap_max_adjust_C * cap_delta_uid *
       cap_pair_confidence_uid * cap_stability_fac,
     TLz = TLz_base - cap_temp_adjust_C,
@@ -1179,14 +1217,14 @@ for (i in 2:nrow(wx)) {
 
   core_melt_fac <- (ice_params$core_melt_base - ice_params$core_melt_base_drop * retention_fac_uid) +
     (ice_params$core_melt_warm - ice_params$core_melt_warm_drop * retention_fac_uid) * pmin(1, wx$PDH[i] / 4) +
-    (ice_params$core_melt_sun - ice_params$core_melt_sun_drop * retention_fac_uid) * wx$solar_core_fac
+    (ice_params$core_melt_sun - ice_params$core_melt_sun_drop * retention_fac_uid) * wx$solar_core_fac[i]
   core_melt_fac <- pmin(0.85, pmax(0.20, core_melt_fac))
   melt_core <- min(core_pre_melt, melt_left * core_melt_fac)
 
   reserve_gain_mm <- 0.30 * growth_core * retention_fac_uid
   reserve_temp_loss <- pmax(0, wx$TLz_72h_step[i] + 2)
   if (!is.finite(reserve_temp_loss)) reserve_temp_loss <- 0
-  reserve_loss_mm <- (0.08 * wx$PDH[i] * DT_H + 0.05 * wx$solar_core_fac + 0.02 * reserve_temp_loss) *
+  reserve_loss_mm <- (0.08 * wx$PDH[i] * DT_H + 0.05 * wx$solar_core_fac[i] + 0.02 * reserve_temp_loss) *
     retention_fac_uid
   reserve_cap_mm <- 0.28 * core_pre_melt
   core_reserve_mm[i] <- min(
