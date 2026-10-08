@@ -55,10 +55,10 @@ class ReviewHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(VALIDATION_ROOT), **kwargs)
 
-    def log_message(self, format: str, *args) -> None:  # noqa: A002
+    def log_message(self, format: str, *args) -> None:
         print(format % args)
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/":
             self.send_response(302)
@@ -74,7 +74,7 @@ class ReviewHandler(SimpleHTTPRequestHandler):
             return
         super().do_GET()
 
-    def do_POST(self) -> None:  # noqa: N802
+    def do_POST(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path != "/api/save":
             self.send_error(404)

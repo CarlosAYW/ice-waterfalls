@@ -516,7 +516,7 @@ writeLines(last_update_payload, "last_update.json", useBytes = TRUE)
 ext         <- extent(r_template)
 
 # =====================================================================
-# SPEED PATCH CORE: write external PNGs per step
+# Write external PNGs per step
 # =====================================================================
 
 dir.create("site/img", recursive = TRUE, showWarnings = FALSE)
@@ -1079,7 +1079,7 @@ m <- m |>
     position  = "bottomleft"
   )
 
-# --- Cluster + filter: moved to a JS file (R-compatible) + stable (only clear/add on cluster)
+# --- Cluster + filter logic from scripts/map_cluster_filter.js (only clear/add on cluster)
 js_cluster_filter <- paste(readLines("scripts/map_cluster_filter.js", warn = FALSE), collapse = "\n")
 
 m <- htmlwidgets::onRender(m, js_cluster_filter)

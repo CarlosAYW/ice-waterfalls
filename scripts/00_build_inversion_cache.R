@@ -1,4 +1,3 @@
-# scripts/00_build_inversion_cache.R
 # ============================================================
 # Build ONE global inversion time series (not per-UID) and cache it.
 # - GeoSphere station: 38 (Imst) 10-min TL
@@ -362,7 +361,6 @@ inv <- df0 %>%
     # Express inversion strength as a positive gradient (°C/100 m)
     inv_grad_max_C_per_100m = pmax(0, pmax(grad01_K_per_m, grad12_K_per_m)) * 100,
     
-    # optional: your old score remains available (now explicitly ΔT-based)
     inv_score_C = 0.7 * pmax(0, I01) + 0.3 * pmax(0, I12),
     
     inv_class = case_when(

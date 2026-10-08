@@ -1,10 +1,10 @@
 # =====================================================================
-# Icefall thickness model per UID (uid = 48)
+# Icefall thickness model per UID
 # - Station: TL/RF (10-min)
 # - INCA timeseries: wind + radiation (UU/VV/GL, hourly -> LOCF)
 # - Topographic sun + wind-vulnerability LUT
 # - Model start always Oct 1 of the current season
-# Output: data/ModelRuns/model_uid48.csv
+# Output: data/ModelRuns/model_uid<UID>.csv
 # =====================================================================
 
 suppressPackageStartupMessages({
@@ -378,7 +378,6 @@ get_geosphere_station_tlrf <- function(start_date, end_date, station_id) {
         start       = start_q,
         end         = end_q
         # IMPORTANT: do NOT send output_format="json"
-        # if you want to force JSON/GeoJSON: output_format = "geojson"
       ) |>
       req_user_agent("icefall-model/1.0 (R httr2)") |>
       req_retry(max_tries = 3) |>
@@ -427,7 +426,7 @@ get_geosphere_station_tlrf <- function(start_date, end_date, station_id) {
       ))
     }
     
-    # keep message for debugging and try next casing
+    # try next casing
     last_msg <- tryCatch(resp_body_string(resp), error = function(e) "")
   }
   
@@ -1005,7 +1004,6 @@ coef <- list(
   
   k_wind             = 0.06,  # Wind enhancement factor [- per m s^-1];
   # scales growth/melt intensity with wind speed
-  # (depending on model formulation).
   
   k_dry              = 0.25,  # Dryness enhancement factor [-];
   # increases growth potential under dry-air conditions
@@ -1020,9 +1018,6 @@ coef <- list(
   # Anchored in Rauchoecker et al. (2024, QJRMS 150, 1243-1266), who measured
   # 5-9 K between valley-floor and slope stations in a 200-300 m deep Alpine
   # valley (SEECAP, Seefeld/Tyrol); 6.5 K is the midpoint of that range.
-  # Previous value 3.0 K was below the entire measured band.
-  # Upper physical bound for doline-like basins is >25 K
-  # (Pospichal et al. 2003, Gruenloch/Gstettneralm) - not applicable here.
 
   cap_wind_full_ms   = 1.0,    # Wind speed up to which the CAP is undisturbed [m s^-1];
   # Rauchoecker et al. (2024) observed warming inside the pool already above
@@ -1030,8 +1025,7 @@ coef <- list(
 
   cap_wind_shutdown_ms = 2.0,  # Wind speed where CAP cooling is mixed out [m s^-1];
   # Rauchoecker et al. (2024): the pool was eroded completely above ~2 m s^-1
-  # (foehn breakthrough). Previous value 4.0 m s^-1 kept CAP cooling active
-  # under conditions in which the measurements show no pool at all.
+  # (foehn breakthrough).
 
   cap_radiation_shutdown_Wm2 = 180, # Direct-radiation threshold reducing CAP [-];
   # direct sun weakens near-surface pooling during the day.
@@ -1064,7 +1058,7 @@ wx <- wx %>%
     # Target elevation from station elevation + dz (also works if ice_alt_m is missing).
     z_target_m = z_aws + dz_m,
     
-    # Piecewise dT over two layers (below/above Z1=1935 m); sign is correct in both directions.
+    # Piecewise dT over two layers (below/above Z1=1935 m).
     dT_prof = if_else(
       use_prof,
       {
@@ -1298,7 +1292,7 @@ plt <- ggplot(mod, aes(time, thickness_m)) +
   )
 
 # =====================================================================
-# Export for the web (variant A): PNG to site/plots/
+# Export for the web: PNG to site/plots/
 # =====================================================================
 dir.create("site/plots", recursive = TRUE, showWarnings = FALSE)
 

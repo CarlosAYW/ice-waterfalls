@@ -1,4 +1,3 @@
-# scripts/02_build_list_page.R
 # ============================================================
 # Build list page (summary table) for GitHub Pages + offline viewing
 # - meta:        data/Koordinaten_Wasserfaelle/eisklettern_links_entries_diff.csv
@@ -474,8 +473,7 @@ message("✅ Wrote JSON: ", OUT_JSON)
 
 # ----------------------------
 # 7) Write list.html
-#    Important offline fix:
-#    - Use Base64-embedded JSON (no fetch needed for file://)
+#    JSON is embedded as Base64, so the page also works offline (file://)
 # ----------------------------
 today_str <- format(today, "%d.%m.%Y")
 

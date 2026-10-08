@@ -263,7 +263,7 @@ def read_model_series(uid: int) -> dict[str, object] | None:
                 if not raw or raw.upper() in {"NA", "NAN", "NULL"}:
                     continue
                 try:
-                    bucket[key].append(float(raw))  # type: ignore[index, union-attr]
+                    bucket[key].append(float(raw))
                 except ValueError:
                     pass
             if str(row.get("is_forecast", "")).strip().upper() == "TRUE":
@@ -271,12 +271,12 @@ def read_model_series(uid: int) -> dict[str, object] | None:
 
     series: list[dict[str, object]] = []
     for date, bucket in sorted(daily.items()):
-        thickness = bucket["thickness"]  # type: ignore[assignment]
+        thickness = bucket["thickness"]
         if not thickness:
             continue
-        clim = bucket["climbability"]  # type: ignore[assignment]
-        tlz = bucket["tlz"]  # type: ignore[assignment]
-        score_h = bucket["score_h"]  # type: ignore[assignment]
+        clim = bucket["climbability"]
+        tlz = bucket["tlz"]
+        score_h = bucket["score_h"]
         series.append(
             {
                 "date": date,
@@ -318,7 +318,7 @@ def build_data() -> dict[str, object]:
         if not model:
             case["model_status"] = "kein Modelllauf"
             continue
-        by_date = model.get("by_date", {})  # type: ignore[union-attr]
+        by_date = model.get("by_date", {})
         if case["date_iso"] not in by_date:
             case["model_status"] = "kein Modellwert am Tag"
             continue
