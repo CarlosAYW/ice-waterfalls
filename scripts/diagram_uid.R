@@ -1211,14 +1211,14 @@ for (i in 2:nrow(wx)) {
 
   core_melt_fac <- (ice_params$core_melt_base - ice_params$core_melt_base_drop * retention_fac_uid) +
     (ice_params$core_melt_warm - ice_params$core_melt_warm_drop * retention_fac_uid) * pmin(1, wx$PDH[i] / 4) +
-    (ice_params$core_melt_sun - ice_params$core_melt_sun_drop * retention_fac_uid) * wx$solar_core_fac[i]
+    (ice_params$core_melt_sun - ice_params$core_melt_sun_drop * retention_fac_uid) * wx$solar_core_fac
   core_melt_fac <- pmin(0.85, pmax(0.20, core_melt_fac))
   melt_core <- min(core_pre_melt, melt_left * core_melt_fac)
 
   reserve_gain_mm <- 0.30 * growth_core * retention_fac_uid
   reserve_temp_loss <- pmax(0, wx$TLz_72h_step[i] + 2)
   if (!is.finite(reserve_temp_loss)) reserve_temp_loss <- 0
-  reserve_loss_mm <- (0.08 * wx$PDH[i] * DT_H + 0.05 * wx$solar_core_fac[i] + 0.02 * reserve_temp_loss) *
+  reserve_loss_mm <- (0.08 * wx$PDH[i] * DT_H + 0.05 * wx$solar_core_fac + 0.02 * reserve_temp_loss) *
     retention_fac_uid
   reserve_cap_mm <- 0.28 * core_pre_melt
   core_reserve_mm[i] <- min(
